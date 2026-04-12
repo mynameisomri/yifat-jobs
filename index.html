@@ -6,41 +6,63 @@
     <title>Yifat | Executive Radar</title>
     <style>
         :root { --bg: #000; --glass: rgba(255, 255, 255, 0.05); --accent: #0A84FF; --success: #30D158; }
-        body { background: radial-gradient(circle at top, #1c1c1e 0%, #000 100%); color: white; font-family: -apple-system, system-ui; margin: 0; padding: 20px; min-height: 100vh; }
+        body { background: radial-gradient(circle at top, #1c1c1e 0%, #000 100%); color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; min-height: 100vh; }
         .container { max-width: 480px; margin: 0 auto; }
         header { text-align: center; padding: 40px 0; }
-        .job-card { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 24px; margin-bottom: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); transition: 0.3s; }
-        .match-badge { background: var(--accent); padding: 4px 14px; border-radius: 100px; font-weight: 700; font-size: 14px; float: left; }
-        .priority { border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(10,132,255,0.2); }
-        .low-match { opacity: 0.5; filter: grayscale(1); }
-        .company { color: #8e8e93; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .title { font-size: 22px; margin: 12px 0 6px; font-weight: 700; }
-        .salary { color: var(--success); font-weight: 600; font-size: 16px; margin-bottom: 15px; }
-        .insight { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 14px; font-size: 14px; color: #d1d1d6; line-height: 1.5; }
-        .btn { display: block; background: var(--accent); color: white; text-align: center; padding: 16px; border-radius: 16px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+        h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px; }
+        .job-card { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .match-badge { background: var(--accent); color: white; padding: 4px 12px; border-radius: 100px; font-weight: 700; font-size: 12px; position: absolute; left: 20px; top: 24px; }
+        .priority { border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(10,132,255,0.15); }
+        .company { color: #8e8e93; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+        .title { font-size: 20px; margin: 0 0 8px 0; font-weight: 700; width: 80%; }
+        .salary { color: var(--success); font-weight: 600; font-size: 15px; margin-bottom: 16px; display: block; }
+        .insight { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; font-size: 14px; color: #d1d1d6; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05); }
+        .btn { display: block; background: #fff; color: #000; text-align: center; padding: 14px; border-radius: 14px; text-decoration: none; font-weight: 700; margin-top: 20px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); opacity: 0.8; }
+        #status { text-align: center; color: #444; font-size: 14px; margin-top: 40px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header><h1>Career Radar</h1><p style="color:#8e8e93;">Exclusive for Yifat Rahamim</p></header>
-        <div id="feed">סורק משרות...</div>
+        <header>
+            <h1>Career Radar</h1>
+            <p style="color:#8e8e93; margin:0;">ליפעת רחמים</p>
+        </header>
+        <div id="feed">
+            <p style="text-align:center; color:#8e8e93;">טוען משרות מעודכנות...</p>
+        </div>
+        <div id="status">Last sync: Automatic (3x Daily)</div>
     </div>
+
     <script>
         async function fetchJobs() {
             try {
-                const r = await fetch('jobs.json');
-                const d = await r.json();
-                document.getElementById('feed').innerHTML = d.reverse().map(j => `
-                    <div class="job-card ${j.match_percent >= 90 ? 'priority' : ''} ${j.match_percent < 65 ? 'low-match' : ''}">
-                        <div class="match-badge">${j.match_percent}%</div>
+                // הוספת 'cache: no-store' כדי לוודא שגוגל לא מציג אתר ישן
+                const response = await fetch('jobs.json?v=' + Date.now(), { cache: "no-store" });
+                const jobs = await response.json();
+                
+                if (!jobs || jobs.length === 0) {
+                    document.getElementById('feed').innerHTML = "<p style='text-align:center;'>המערכת מוכנה. מחכה לסריקה הבאה.</p>";
+                    return;
+                }
+
+                document.getElementById('feed').innerHTML = jobs.reverse().map(j => `
+                    <div class="job-card ${j.match_percent >= 90 ? 'priority' : ''}">
+                        <div class="match-badge">${j.match_percent}% Match</div>
                         <div class="company">${j.company}</div>
                         <div class="title">${j.role}</div>
                         <div class="salary">${j.salary}</div>
-                        <div class="insight"><strong>Hiring Insight:</strong><br>${j.analysis}</div>
-                        <a href="${j.link}" target="_blank" class="btn">View & Apply</a>
+                        <div class="insight">
+                            <strong style="color:#fff; display:block; margin-bottom:4px;">Hiring Insight:</strong>
+                            ${j.analysis}
+                        </div>
+                        <a href="${j.link}" target="_blank" class="btn">View Position</a>
                     </div>
                 `).join('');
-            } catch(e) { document.getElementById('feed').innerHTML = "<p style='text-align:center;'>המערכת מוכנה. מחכה לסריקה הראשונה.</p>"; }
+            } catch(e) {
+                console.error(e);
+                document.getElementById('feed').innerHTML = "<p style='text-align:center;'>מעדכן נתונים... נסה לרענן בעוד דקה.</p>";
+            }
         }
         fetchJobs();
     </script>

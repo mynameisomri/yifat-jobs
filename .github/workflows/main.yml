@@ -6,11 +6,14 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      # הגדרה שמכריחה את GitHub להשתמש בגרסה החדשה והבטוחה
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2 # גרסה מעודכנת ספציפית
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.3.0 # גרסה מעודכנת ספציפית
         with:
           python-version: '3.11'
       - name: Install Libs
@@ -33,13 +36,11 @@ jobs:
           except: 
               jobs = []
 
-          # פרומפט בשורה אחת כדי למנוע בעיות גרשיים
           prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech/Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile: BNY Mellon/Euroclear experience. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
           
           res = model.generate_content(prompt)
           text = res.text.strip()
           
-          # ניקוי JSON בצורה בטוחה
           if '```json' in text:
               text = text.split('```json')[1].split('```')[0].strip()
           elif '```' in text:

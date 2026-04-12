@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "company": "Stripe",
+    "role": "Director, Banking Ops",
+    "salary": "$210,000 - $280,000",
+    "match_percent": 95,
+    "analysis": "תפקיד בכיר בניהול תשתיות פיננסיות. התאמה מושלמת לניסיון מול Euroclear ומערכות סליקה בינלאומיות.",
+    "link": "https://www.stripe.com/jobs"
+  },
+  {
+    "company": "J.P. Morgan",
+    "role": "VP, Digital Assets Strategy",
+    "salary": "$185,000+",
+    "match_percent": 88,
+    "analysis": "מיקוד באסטרטגיית נכסים דיגיטליים בשוק ההון. מתאים למומחיות בתשתיות שוק (Market Infrastructure).",
+    "link": "https://jpmorgan.com/careers"
+  }
+]

@@ -5,66 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yifat | Executive Radar</title>
     <style>
-        :root { --bg: #000; --glass: rgba(255, 255, 255, 0.05); --accent: #0A84FF; --success: #30D158; }
-        body { background: radial-gradient(circle at top, #1c1c1e 0%, #000 100%); color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; min-height: 100vh; }
+        :root { --bg: #000; --glass: rgba(255, 255, 255, 0.05); --accent: #0A84FF; --uncertain: #FF9F0A; --success: #30D158; }
+        body { background: radial-gradient(circle at top, #1c1c1e 0%, #000 100%); color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 20px; min-height: 100vh; }
         .container { max-width: 480px; margin: 0 auto; }
-        header { text-align: center; padding: 40px 0; }
-        h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px; }
-        .job-card { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
-        .match-badge { background: var(--accent); color: white; padding: 4px 12px; border-radius: 100px; font-weight: 700; font-size: 12px; position: absolute; left: 20px; top: 24px; }
-        .priority { border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(10,132,255,0.15); }
-        .company { color: #8e8e93; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
-        .title { font-size: 20px; margin: 0 0 8px 0; font-weight: 700; width: 80%; }
-        .salary { color: var(--success); font-weight: 600; font-size: 15px; margin-bottom: 16px; display: block; }
-        .insight { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; font-size: 14px; color: #d1d1d6; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05); }
-        .btn { display: block; background: #fff; color: #000; text-align: center; padding: 14px; border-radius: 14px; text-decoration: none; font-weight: 700; margin-top: 20px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.8; }
-        #status { text-align: center; color: #444; font-size: 14px; margin-top: 40px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 12px; border-radius: 12px; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); color: #8e8e93; text-align: center; cursor: pointer; font-weight: 600; }
+        .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .job-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .uncertain-card { border-left: 4px solid var(--uncertain); }
+        .match-badge { background: var(--accent); padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; position: absolute; left: 20px; top: 20px; }
+        .uncertain-badge { background: var(--uncertain); }
+        .title { font-size: 19px; font-weight: 700; margin: 25px 0 5px 0; }
+        .company { color: #8e8e93; font-size: 14px; }
+        .insight { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; font-size: 14px; margin: 15px 0; border: 1px solid rgba(255,255,255,0.05); line-height: 1.4; }
+        .actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 2; background: #fff; color: #000; text-align: center; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px; }
+        .copy-btn { flex: 1; background: var(--glass); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; font-size: 13px; cursor: pointer; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Career Radar</h1>
-            <p style="color:#8e8e93; margin:0;">ליפעת רחמים</p>
+        <header style="text-align:center; padding: 30px 0;">
+            <h1 style="margin:0;">Career Radar</h1>
+            <p style="color:#8e8e93; margin-top:5px;">Executive Opportunities</p>
         </header>
-        <div id="feed">
-            <p style="text-align:center; color:#8e8e93;">טוען משרות מעודכנות...</p>
+
+        <div class="tabs">
+            <div class="tab active" id="tab-main" onclick="showTab('main')">משרות חמות</div>
+            <div class="tab" id="tab-uncertain" onclick="showTab('uncertain')">בסימן שאלה</div>
         </div>
-        <div id="status">Last sync: Automatic (3x Daily)</div>
+
+        <div id="main-feed"></div>
+        <div id="uncertain-feed" class="hidden"></div>
     </div>
 
     <script>
-        async function fetchJobs() {
+        let allJobs = [];
+        async function load() {
             try {
-                // הוספת 'cache: no-store' כדי לוודא שגוגל לא מציג אתר ישן
-                const response = await fetch('jobs.json?v=' + Date.now(), { cache: "no-store" });
-                const jobs = await response.json();
-                
-                if (!jobs || jobs.length === 0) {
-                    document.getElementById('feed').innerHTML = "<p style='text-align:center;'>המערכת מוכנה. מחכה לסריקה הבאה.</p>";
-                    return;
-                }
-
-                document.getElementById('feed').innerHTML = jobs.reverse().map(j => `
-                    <div class="job-card ${j.match_percent >= 90 ? 'priority' : ''}">
-                        <div class="match-badge">${j.match_percent}% Match</div>
-                        <div class="company">${j.company}</div>
-                        <div class="title">${j.role}</div>
-                        <div class="salary">${j.salary}</div>
-                        <div class="insight">
-                            <strong style="color:#fff; display:block; margin-bottom:4px;">Hiring Insight:</strong>
-                            ${j.analysis}
-                        </div>
-                        <a href="${j.link}" target="_blank" class="btn">View Position</a>
-                    </div>
-                `).join('');
-            } catch(e) {
-                console.error(e);
-                document.getElementById('feed').innerHTML = "<p style='text-align:center;'>מעדכן נתונים... נסה לרענן בעוד דקה.</p>";
+                const res = await fetch('jobs.json?v=' + Date.now(), { cache: "no-store" });
+                allJobs = await res.json();
+                render();
+            } catch (e) {
+                document.getElementById('main-feed').innerHTML = "<p style='text-align:center;'>טוען נתונים...</p>";
             }
         }
-        fetchJobs();
+
+        function render() {
+            const mainFeed = document.getElementById('main-feed');
+            const uncertainFeed = document.getElementById('uncertain-feed');
+            
+            const main = allJobs.filter(j => j.match_percent >= 75).reverse();
+            const uncertain = allJobs.filter(j => j.match_percent < 75).reverse();
+
+            mainFeed.innerHTML = main.length ? main.map(j => cardHtml(j)).join('') : "<p style='text-align:center; color:#8e8e93;'>מחפש משרות חדשות...</p>";
+            uncertainFeed.innerHTML = uncertain.length ? uncertain.map(j => cardHtml(j, true)).join('') : "<p style='text-align:center; color:#8e8e93;'>אין כרגע משרות בסימן שאלה.</p>";
+        }
+
+        function cardHtml(j, isUncertain = false) {
+            return `
+                <div class="job-card ${isUncertain ? 'uncertain-card' : ''}">
+                    <div class="match-badge ${isUncertain ? 'uncertain-badge' : ''}">${j.match_percent}% Match</div>
+                    <div class="title">${j.role}</div>
+                    <div class="company">${j.company} • ${j.salary}</div>
+                    <div class="insight">${j.analysis}</div>
+                    <div class="actions">
+                        <a href="${j.link}" target="_blank" class="btn">צפי במשרה</a>
+                        <button class="copy-btn" onclick="copyJob('${j.role}', '${j.company}', '${j.link}')">העתק</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showTab(type) {
+            document.getElementById('tab-main').classList.toggle('active', type === 'main');
+            document.getElementById('tab-uncertain').classList.toggle('active', type === 'uncertain');
+            document.getElementById('main-feed').classList.toggle('hidden', type !== 'main');
+            document.getElementById('uncertain-feed').classList.toggle('hidden', type !== 'uncertain');
+        }
+
+        function copyJob(role, company, link) {
+            const text = `${role} at ${company}\nLink: ${link}`;
+            navigator.clipboard.writeText(text);
+            alert('פרטי המשרה הועתקו!');
+        }
+
+        load();
     </script>
 </body>
 </html>

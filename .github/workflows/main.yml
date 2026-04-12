@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # מעודכן ל-Node 24
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5 # מעודכן ל-Node 24
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # גרסה יציבה ועדכנית
+          python-version: '3.11'
       - name: Install Libs
         run: pip install google-generativeai
       - name: Run Scan
@@ -25,7 +25,6 @@ jobs:
 
           api_key = os.environ.get('GEMINI_API_KEY')
           genai.configure(api_key=api_key)
-          
           model = genai.GenerativeModel('gemini-1.5-flash')
           
           try:
@@ -34,24 +33,30 @@ jobs:
           except: 
               jobs = []
 
+          # פרומפט בשורה אחת כדי למנוע בעיות גרשיים
           prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech/Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile: BNY Mellon/Euroclear experience. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
           
           res = model.generate_content(prompt)
           text = res.text.strip()
+          
+          # ניקוי JSON בצורה בטוחה
           if '```json' in text:
               text = text.split('```json')[1].split('```')[0].strip()
           elif '```' in text:
               text = text.split('```')[1].strip()
           
-          new_data = json.loads(text)
-          
-          existing_links = {j['link'] for j in jobs}
-          for j in new_data:
-              if j['link'] not in existing_links: 
-                  jobs.append(j)
-          
-          with open('jobs.json', 'w', encoding='utf-8') as f: 
-              json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+          try:
+              new_data = json.loads(text)
+              existing_links = {j['link'] for j in jobs}
+              for j in new_data:
+                  if j['link'] not in existing_links: 
+                      jobs.append(j)
+              
+              with open('jobs.json', 'w', encoding='utf-8') as f: 
+                  json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+          except Exception as e:
+              print(f'Error parsing JSON: {e}')
+              exit(1)
           "
       - name: Deploy
         run: |

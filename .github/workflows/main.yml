@@ -6,7 +6,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions: # הוספת הרשאות ישירות בקוד ליתר ביטחון
+    permissions:
       contents: write
     steps:
       - name: Checkout Code
@@ -23,7 +23,7 @@ jobs:
         run: |
           python3 -c "
           import google.generativeai as genai
-          import json, os
+          import json, os, re
 
           genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
           model = genai.GenerativeModel('gemini-1.5-flash')
@@ -32,21 +32,30 @@ jobs:
               with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
           except: jobs = []
 
-          prompt = 'Search for 3-5 VP/Director jobs in Fintech/Banking, US Remote, $150k+. Return ONLY valid JSON: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]'
+          # פרומפט משופר וגמיש יותר
+          prompt = 'Find 5 current high-level VP or Director jobs in US (can be Remote or Hybrid). Focus on Fintech, Banking or Strategy. For each job, provide: company, role, salary estimate, match_percent (80-95), and a short 2-sentence hiring insight. Return ONLY a pure JSON list.'
           
           try:
               res = model.generate_content(prompt)
-              text = res.text.strip().replace('```json', '').replace('```', '')
-              new_data = json.loads(text)
+              # ניקוי אגרסיבי יותר של תגיות Markdown
+              clean_text = re.sub(r'```json\s*|```\s*', '', res.text).strip()
+              new_data = json.loads(clean_text)
               
-              existing_links = {j.get('link') for j in jobs}
+              existing_links = {j.get('link', '') for j in jobs}
               for j in new_data:
-                  if j.get('link') not in existing_links: jobs.append(j)
+                  # הוספת לינק גנרי אם ה-AI שכח, כדי שהאתר לא יישבר
+                  if 'link' not in j or not j['link']:
+                      j['link'] = f'https://www.google.com/search?q={j[\"company\"]}+{j[\"role\"]}+job'.replace(' ', '+')
+                  
+                  if j.get('link') not in existing_links:
+                      jobs.append(j)
               
               with open('jobs.json', 'w', encoding='utf-8') as f:
                   json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+              print(f'Successfully added {len(new_data)} jobs.')
           except Exception as e:
               print(f'Error: {e}')
+              exit(1)
           "
       - name: Commit and Push
         run: |

@@ -1,8 +1,8 @@
 name: Career Sync
 on:
   schedule:
-    - cron: '0 12,17,23 * * *' 
-  workflow_dispatch:
+    - cron: '0 12,17,23 * * *' # רץ ב-8 בבוקר, 1 בצהריים ו-7 בערב (שעון ניו יורק)
+  workflow_dispatch: # מאפשר הרצה ידנית
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -34,10 +34,12 @@ jobs:
           except: 
               jobs = []
 
-prompt = 'Search for 5 current high-level banking or fintech jobs in the US (Remote). Search for keywords like VP, Director, Strategy, or Market Infrastructure. Return a JSON list with: company, role, salary, match_percent (85-98), analysis (2 sentences in Hebrew), and link. Use your search tool to find actual open roles from the last 7 days.'          
+          # פרומפט משופר: חיפוש רחב יותר ותובנות בעברית
+          prompt = 'Search for 5 current high-level VP or Director jobs in the US (Remote/Hybrid). Focus on Fintech, Banking, or Strategy. For each job, provide: company, role, salary, match_percent (85-98), and a short 2-sentence hiring insight IN HEBREW. Return ONLY a pure JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]'
+          
           try:
               res = model.generate_content(prompt)
-              # מחלץ רק את מה שבין הסוגריים המרובעים במידה וה-AI הוסיף טקסט
+              # חילוץ ה-JSON מתוך התשובה של ה-AI
               match = re.search(r'\[.*\]', res.text, re.DOTALL)
               if match:
                   clean_text = match.group(0)
@@ -52,14 +54,14 @@ prompt = 'Search for 5 current high-level banking or fintech jobs in the US (Rem
                       json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
                   print('Success: Added new jobs.')
               else:
-                  print(f'No JSON found in response: {res.text}')
+                  print('No JSON found in response.')
           except Exception as e:
-              print(f'Error during processing: {e}')
+              print(f'Error: {e}')
           "
       - name: Commit and Push
         run: |
           git config user.name 'CareerBot'
           git config user.email 'bot@github.com'
           git add jobs.json
-          git commit -m "Update jobs" || exit 0
+          git commit -m "Update jobs with Hebrew insights" || exit 0
           git push

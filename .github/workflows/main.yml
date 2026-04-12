@@ -11,7 +11,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10' # שדרגנו גרסה למניעת אזהרות
       - name: Install Libs
         run: pip install google-generativeai
       - name: Run Scan
@@ -20,26 +20,39 @@ jobs:
         run: |
           python3 -c "
           import google.generativeai as genai
-          import json, os, datetime
+          import json, os
 
-          genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+          # תיקון: הגדרת המפתח בצורה מפורשת לתוך הספרייה
+          api_key = os.environ.get('GEMINI_API_KEY')
+          genai.configure(api_key=api_key)
+          
           model = genai.GenerativeModel('gemini-1.5-flash')
           
           try:
-              with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
-          except: jobs = []
+              with open('jobs.json', 'r', encoding='utf-8') as f: 
+                  jobs = json.load(f)
+          except: 
+              jobs = []
 
-          prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech or Commercial Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile match: Experience in BNY Mellon/Euroclear, Market Infrastructure expert. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
+          prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech/Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile: BNY Mellon/Euroclear experience. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
           
           res = model.generate_content(prompt)
-          clean_json = res.text.replace('```json', '').replace('```', '').strip()
-          new_data = json.loads(clean_json)
+          # ניקוי בטוח יותר של ה-JSON
+          text = res.text.strip()
+          if '```json' in text:
+              text = text.split('```json')[1].split('```')[0].strip()
+          elif '```' in text:
+              text = text.split('```')[1].strip()
+          
+          new_data = json.loads(text)
           
           existing_links = {j['link'] for j in jobs}
           for j in new_data:
-              if j['link'] not in existing_links: jobs.append(j)
+              if j['link'] not in existing_links: 
+                  jobs.append(j)
           
-          with open('jobs.json', 'w', encoding='utf-8') as f: json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+          with open('jobs.json', 'w', encoding='utf-8') as f: 
+              json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
           "
       - name: Deploy
         run: |

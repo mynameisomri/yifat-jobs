@@ -6,14 +6,11 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    env:
-      # הגדרה שמכריחה את GitHub להשתמש בגרסה החדשה והבטוחה
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2 # גרסה מעודכנת ספציפית
+        uses: actions/checkout@v4 # גרסה יציבה וסטנדרטית
       - name: Set up Python
-        uses: actions/setup-python@v5.3.0 # גרסה מעודכנת ספציפית
+        uses: actions/setup-python@v5 # גרסה יציבה וסטנדרטית
         with:
           python-version: '3.11'
       - name: Install Libs

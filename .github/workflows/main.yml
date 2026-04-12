@@ -6,9 +6,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    env:
-      # פקודה שמשתיקה את האזהרה ומאשרת ל-GitHub להריץ הכל על Node 24
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+    permissions: # הוספת הרשאות ישירות בקוד ליתר ביטחון
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -26,43 +25,33 @@ jobs:
           import google.generativeai as genai
           import json, os
 
-          api_key = os.environ.get('GEMINI_API_KEY')
-          genai.configure(api_key=api_key)
+          genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
           model = genai.GenerativeModel('gemini-1.5-flash')
           
           try:
-              with open('jobs.json', 'r', encoding='utf-8') as f: 
-                  jobs = json.load(f)
-          except: 
-              jobs = []
+              with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
+          except: jobs = []
 
-          prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech/Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile: BNY Mellon/Euroclear experience. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
-          
-          res = model.generate_content(prompt)
-          text = res.text.strip()
-          
-          if '```json' in text:
-              text = text.split('```json')[1].split('```')[0].strip()
-          elif '```' in text:
-              text = text.split('```')[1].strip()
+          prompt = 'Search for 3-5 VP/Director jobs in Fintech/Banking, US Remote, $150k+. Return ONLY valid JSON: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]'
           
           try:
+              res = model.generate_content(prompt)
+              text = res.text.strip().replace('```json', '').replace('```', '')
               new_data = json.loads(text)
-              existing_links = {j['link'] for j in jobs}
-              for j in new_data:
-                  if j['link'] not in existing_links: 
-                      jobs.append(j)
               
-              with open('jobs.json', 'w', encoding='utf-8') as f: 
+              existing_links = {j.get('link') for j in jobs}
+              for j in new_data:
+                  if j.get('link') not in existing_links: jobs.append(j)
+              
+              with open('jobs.json', 'w', encoding='utf-8') as f:
                   json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
           except Exception as e:
-              print(f'Error parsing JSON: {e}')
-              exit(1)
+              print(f'Error: {e}')
           "
-      - name: Deploy
+      - name: Commit and Push
         run: |
           git config user.name 'CareerBot'
           git config user.email 'bot@github.com'
           git add jobs.json
-          git commit -m \"Sync jobs\" || exit 0
+          git commit -m "Update jobs" || exit 0
           git push

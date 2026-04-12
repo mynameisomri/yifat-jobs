@@ -7,11 +7,12 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4 # מעודכן ל-Node 24
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # מעודכן ל-Node 24
         with:
-          python-version: '3.10' # שדרגנו גרסה למניעת אזהרות
+          python-version: '3.11' # גרסה יציבה ועדכנית
       - name: Install Libs
         run: pip install google-generativeai
       - name: Run Scan
@@ -22,7 +23,6 @@ jobs:
           import google.generativeai as genai
           import json, os
 
-          # תיקון: הגדרת המפתח בצורה מפורשת לתוך הספרייה
           api_key = os.environ.get('GEMINI_API_KEY')
           genai.configure(api_key=api_key)
           
@@ -37,7 +37,6 @@ jobs:
           prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech/Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile: BNY Mellon/Euroclear experience. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
           
           res = model.generate_content(prompt)
-          # ניקוי בטוח יותר של ה-JSON
           text = res.text.strip()
           if '```json' in text:
               text = text.split('```json')[1].split('```')[0].strip()

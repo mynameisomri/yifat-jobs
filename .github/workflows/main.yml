@@ -1,0 +1,50 @@
+name: Career Sync
+on:
+  schedule:
+    - cron: '0 12,17,23 * * *' 
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Libs
+        run: pip install google-generativeai
+      - name: Run Scan
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 -c "
+          import google.generativeai as genai
+          import json, os, datetime
+
+          genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+          model = genai.GenerativeModel('gemini-1.5-flash')
+          
+          try:
+              with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
+          except: jobs = []
+
+          prompt = 'Find 3-5 current VP/Director jobs in US (Remote). Criteria: Fintech or Commercial Banking, Salary: $150k+, Focus: Capital Markets, Strategy, or Ops. Profile match: Experience in BNY Mellon/Euroclear, Market Infrastructure expert. Return ONLY valid JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}].'
+          
+          res = model.generate_content(prompt)
+          clean_json = res.text.replace('```json', '').replace('```', '').strip()
+          new_data = json.loads(clean_json)
+          
+          existing_links = {j['link'] for j in jobs}
+          for j in new_data:
+              if j['link'] not in existing_links: jobs.append(j)
+          
+          with open('jobs.json', 'w', encoding='utf-8') as f: json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+          "
+      - name: Deploy
+        run: |
+          git config user.name 'CareerBot'
+          git config user.email 'bot@github.com'
+          git add jobs.json
+          git commit -m \"Sync jobs\" || exit 0
+          git push

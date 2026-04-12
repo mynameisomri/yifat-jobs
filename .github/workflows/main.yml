@@ -29,33 +29,33 @@ jobs:
           model = genai.GenerativeModel('gemini-1.5-flash')
           
           try:
-              with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
-          except: jobs = []
+              with open('jobs.json', 'r', encoding='utf-8') as f: 
+                  jobs = json.load(f)
+          except: 
+              jobs = []
 
-          # פרומפט משופר וגמיש יותר
-          prompt = 'Find 5 current high-level VP or Director jobs in US (can be Remote or Hybrid). Focus on Fintech, Banking or Strategy. For each job, provide: company, role, salary estimate, match_percent (80-95), and a short 2-sentence hiring insight. Return ONLY a pure JSON list.'
+          prompt = 'Find 3-5 current VP/Director jobs in US (Remote/Hybrid). Fintech/Banking. Return ONLY a JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":90,\"analysis\":\"\",\"link\":\"\"}]'
           
           try:
               res = model.generate_content(prompt)
-              # ניקוי אגרסיבי יותר של תגיות Markdown
-              clean_text = re.sub(r'```json\s*|```\s*', '', res.text).strip()
-              new_data = json.loads(clean_text)
-              
-              existing_links = {j.get('link', '') for j in jobs}
-              for j in new_data:
-                  # הוספת לינק גנרי אם ה-AI שכח, כדי שהאתר לא יישבר
-                  if 'link' not in j or not j['link']:
-                      j['link'] = f'https://www.google.com/search?q={j[\"company\"]}+{j[\"role\"]}+job'.replace(' ', '+')
+              # מחלץ רק את מה שבין הסוגריים המרובעים במידה וה-AI הוסיף טקסט
+              match = re.search(r'\[.*\]', res.text, re.DOTALL)
+              if match:
+                  clean_text = match.group(0)
+                  new_data = json.loads(clean_text)
                   
-                  if j.get('link') not in existing_links:
-                      jobs.append(j)
-              
-              with open('jobs.json', 'w', encoding='utf-8') as f:
-                  json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
-              print(f'Successfully added {len(new_data)} jobs.')
+                  existing_links = {j.get('link') for j in jobs if j.get('link')}
+                  for j in new_data:
+                      if j.get('link') not in existing_links:
+                          jobs.append(j)
+                  
+                  with open('jobs.json', 'w', encoding='utf-8') as f:
+                      json.dump(jobs[-100:], f, ensure_ascii=False, indent=2)
+                  print('Success: Added new jobs.')
+              else:
+                  print(f'No JSON found in response: {res.text}')
           except Exception as e:
-              print(f'Error: {e}')
-              exit(1)
+              print(f'Error during processing: {e}')
           "
       - name: Commit and Push
         run: |

@@ -1,81 +1,59 @@
-name: Career Sync
+name: Career Sync - Robust Final
 on:
   schedule:
-    - cron: '0 * * * *' # ריצה שעתית
+    - cron: '0 */6 * * *'
   workflow_dispatch:
+
 jobs:
   sync:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write      # נוסף כדי לוודא עדכון אתר
+      id-token: write   # נוסף כדי לוודא עדכון אתר
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install Libs
         run: pip install google-generativeai
-      - name: Run Scan
+
+      - name: Run Robust Scan
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 -c "
           import google.generativeai as genai
           import json, os, re
-
           genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
           model = genai.GenerativeModel('gemini-1.5-flash')
-          
           try:
               with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
           except: jobs = []
-
-          prompt = '''
-          ACT AS A RECRUITER. Search LinkedIn, Indeed, and Fintech boards.
-          FIND 10 RECENT JOBS (last 3 days).
-          ROLES: VP/Director in Strategy, Operations, Partnerships, or Chief of Staff.
-          SECTORS: Banking, VC, Crypto, Asset Management, Fintech.
-          LOCATIONS: US Remote OR Hybrid Orlando, FL.
-          SALARY: Must be $150,000+ base.
-          
-          OUTPUT: Return ONLY a valid JSON list. Example: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. 
-          ANALYSIS: 2 short sentences in Hebrew. 
-          MATCH_PERCENT: 85-98 for high fit, 60-74 for uncertain.
-          '''
-          
+          prompt = 'Find 10 VP/Director jobs in Fintech/Banking Strategy/Ops, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Hebrew analysis.'
           try:
               res = model.generate_content(prompt)
-              # Clean and extract JSON robustly
-              raw_text = res.text
-              json_match = re.search(r'\[\s*\{.*\}\s*\]', raw_text, re.DOTALL)
+              json_match = re.search(r'\[.*\]', res.text, re.DOTALL)
               if json_match:
                   new_data = json.loads(json_match.group(0))
-                  
-                  # Create a set of unique identifiers (Company + Role)
                   existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
-                  added = 0
-                  
                   for j in new_data:
-                      job_id = f'{j.get(\"company\")}|{j.get(\"role\")}'
-                      if job_id not in existing_ids and j.get('link'):
+                      if f'{j.get(\"company\")}|{j.get(\"role\")}' not in existing_ids:
                           jobs.append(j)
-                          added += 1
-                  
-                  # Save last 300 jobs
                   with open('jobs.json', 'w', encoding='utf-8') as f:
-                      json.dump(jobs[-300:], f, ensure_ascii=False, indent=2)
-                  print(f'Sync successful. Added {added} new jobs.')
-              else:
-                  print('Error: Could not find JSON in AI response.')
-          except Exception as e:
-              print(f'Critical Error: {e}')
+                      json.dump(jobs[-200:], f, ensure_ascii=False, indent=2)
+          except Exception as e: print(f'Error: {e}')
           "
+
       - name: Commit and Push
         run: |
           git config user.name 'CareerBot'
           git config user.email 'bot@github.com'
           git add jobs.json
-          git commit -m "Hourly Sync - Debugged & Force Search" || exit 0
+          git commit -m "Robust auto-update" || exit 0
           git push

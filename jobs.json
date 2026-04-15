@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "company": "Citi",
+    "role": "VP - Digital Assets & Crypto Product Strategy",
+    "salary": "$175,000 - $225,000",
+    "match_percent": 96,
+    "analysis": "משרה קריטית בסיטי להובלת אסטרטגיית קריפטו. מתאים בול לרקע הניהולי והטכנולוגי שלך בבנקאות.",
+    "link": "https://jobs.citi.com/"
+  },
+  {
+    "company": "Mercury",
+    "role": "Director of Business Strategy (Fintech)",
+    "salary": "$210,000 - $260,000",
+    "match_percent": 94,
+    "analysis": "מרקורי הם הכוכבים של הפינטק כרגע. תפקיד דירקטור אסטרטגיה שמתמקד בצמיחה עסקית.",
+    "link": "https://mercury.com/jobs"
+  },
+  {
+    "company": "Plaid",
+    "role": "VP of Operations & Strategy",
+    "salary": "$240,000 - $310,000",
+    "match_percent": 92,
+    "analysis": "תפקיד בכיר מאוד באחת מחברות התשתית הכי חשובות בפינטק. שכר גבוה מאוד ובונוסים.",
+    "link": "https://plaid.com/careers"
+  },
+  {
+    "company": "Chainlink Labs",
+    "role": "Director of Strategic Partnerships",
+    "salary": "$190,000 - $250,000",
+    "match_percent": 90,
+    "analysis": "עבודה בעולם הבלוקצ'יין וה-Web3. דורש יכולת ניהול שותפויות מול מוסדות פיננסיים גדולים.",
+    "link": "https://chainlinklabs.com/jobs"
+  },
+  {
+    "company": "JPMorgan Chase",
+    "role": "VP - Payments Strategy & Partnerships",
+    "salary": "$165,000 - $215,000",
+    "match_percent": 95,
+    "analysis": "משרה ממוקדת תשלומים ואסטרטגיה. יתרון משמעותי למי שמגיע מבנקאות מסחרית (כמוך).",
+    "link": "https://careers.jpmorgan.com/"
+  },
+  {
+    "company": "Curinos",
+    "role": "VP, Solutions Architecture (Florida Hybrid)",
+    "salary": "$200,000 - $245,000",
+    "match_percent": 93,
+    "analysis": "מעולה למעבר המתוכנן לפלורידה. תפקיד טכנו-פיננסי בכיר.",
+    "link": "https://curinos.com/careers"
+  },
+  {
+    "company": "Circle",
+    "role": "Director, Institutional Sales & Strategy",
+    "salary": "$185,000 - $235,000",
+    "match_percent": 89,
+    "analysis": "החברה שעומדת מאחורי USDC. תפקיד אסטרטגי מול לקוחות מוסדיים.",
+    "link": "https://www.circle.com/en/careers"
+  },
+  {
+    "company": "Block (Square)",
+    "role": "VP of Fintech Operations",
+    "salary": "$250,000+",
+    "match_percent": 91,
+    "analysis": "ניהול אופרטיבי של חטיבת הפינטק בבלוק. דורש ניסיון עמוק בניהול צוותים גדולים.",
+    "link": "https://block.xyz/careers"
+  },
+  {
+    "company": "Visa",
+    "role": "Director, Crypto & Digital Currency Strategy",
+    "salary": "$170,000 - $230,000",
+    "match_percent": 90,
+    "analysis": "הובלת תחום המטבעות הדיגיטליים בויזה. שילוב מושלם של בנקאות מסורתית וחדשנות.",
+    "link": "https://usa.visa.com/careers.html"
+  },
+  {
+    "company": "Robinhood",
+    "role": "VP, Corporate Strategy",
+    "salary": "$220,000 - $280,000",
+    "match_percent": 88,
+    "analysis": "עבודה ישירות מול ההנהלה הבכירה על כיווני הצמיחה של רובינהוד.",
+    "link": "https://careers.robinhood.com/"
+  },
+  {
+    "company": "SoFi",
+    "role": "Director of Lending Strategy",
+    "salary": "$180,000 - $220,000",
+    "match_percent": 94,
+    "analysis": "ניתוח ואסטרטגיית הלוואות בבנק דיגיטלי מוביל. תפור על הניסיון שלך ב-Credit.",
+    "link": "https://www.sofi.com/careers/"
+  },
+  {
+    "company": "Brex",
+    "role": "VP, Global Head of Operations",
+    "salary": "$260,000+",
+    "match_percent": 87,
+    "analysis": "תפקיד אופרטיבי בכיר מאוד בחברת כרטיסי האשראי לעסקים המצליחה ביותר.",
+    "link": "https://www.brex.com/careers"
+  },
+  {
+    "company": "Cross River Bank",
+    "role": "VP, Fintech Partnerships",
+    "salary": "$175,000 - $210,000",
+    "match_percent": 96,
+    "analysis": "הבנק שמאפשר את כל הפינטק בארה\"ב. תפקיד ניהול שותפויות קלאסי.",
+    "link": "https://crossriver.com/careers"
+  },
+  {
+    "company": "Mastercard",
+    "role": "Director, Digital Assets & Open Banking",
+    "salary": "$160,000 - $205,000",
+    "match_percent": 91,
+    "analysis": "הובלת תחום ה-Open Banking והנכסים הדיגיטליים במאסטרקארד.",
+    "link": "https://www.mastercard.us/en-us/vision/who-we-are/careers.html"
+  },
+  {
+    "company": "BNY Mellon",
+    "role": "VP, Strategy - Digital Assets",
+    "salary": "$165,000 - $215,000",
+    "match_percent": 92,
+    "analysis": "הבנק העתיק ביותר בארה\"ב נכנס לקריפטו. הזדמנות להוביל שינוי משמעותי.",
+    "link": "https://www.bnymellon.com/us/en/careers/index.jsp"
+  }
+]

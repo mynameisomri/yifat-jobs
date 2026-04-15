@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pages: write      # נוסף כדי לוודא עדכון אתר
-      id-token: write   # נוסף כדי לוודא עדכון אתר
+      pages: write
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -35,19 +35,22 @@ jobs:
           try:
               with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
           except: jobs = []
-          prompt = 'Find 10 VP/Director jobs in Fintech/Banking Strategy/Ops, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Hebrew analysis.'
+          prompt = 'Find 10 NEW VP/Director jobs in Fintech/Banking Strategy, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Use Hebrew for analysis.'
           try:
               res = model.generate_content(prompt)
               json_match = re.search(r'\[.*\]', res.text, re.DOTALL)
               if json_match:
                   new_data = json.loads(json_match.group(0))
                   existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
+                  added = 0
                   for j in new_data:
                       if f'{j.get(\"company\")}|{j.get(\"role\")}' not in existing_ids:
-                          jobs.append(j)
+                          jobs.insert(0, j)
+                          added += 1
                   with open('jobs.json', 'w', encoding='utf-8') as f:
-                      json.dump(jobs[-200:], f, ensure_ascii=False, indent=2)
-          except Exception as e: print(f'Error: {e}')
+                      json.dump(jobs[:200], f, ensure_ascii=False, indent=2)
+                  print(f'Added {added} jobs.')
+          except Exception as e: print(e)
           "
 
       - name: Commit and Push
@@ -55,5 +58,14 @@ jobs:
           git config user.name 'CareerBot'
           git config user.email 'bot@github.com'
           git add jobs.json
-          git commit -m "Robust auto-update" || exit 0
+          git commit -m "Auto-update" || exit 0
           git push
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

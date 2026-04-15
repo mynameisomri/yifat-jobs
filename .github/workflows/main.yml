@@ -1,40 +1,9 @@
-name: Career Sync - 2026 Final
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Libs
-        run: pip install google-genai
-
-      - name: Run Robust Scan
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          python3 -c "
+python3 -c "
           from google import genai
-          import json, os, re, sys
+          import json, os, re, sys, time
           
           try:
               key = os.environ.get('GEMINI_API_KEY')
-              if not key: raise Exception('Missing API Key')
-              
               client = genai.Client(api_key=key)
               
               try:
@@ -43,46 +12,35 @@ jobs:
 
               prompt = 'Find 10 VP/Director jobs in Fintech/Banking Strategy, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Use Hebrew for analysis.'
               
-              response = client.models.generate_content(
-                  model='gemini-2.0-flash',
-                  contents=prompt
-              )
-              
-              text_content = response.text
-              json_match = re.search(r'\[.*\]', text_content, re.DOTALL)
-              
-              if json_match:
-                  new_data = json.loads(json_match.group(0))
-                  existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
-                  added = 0
-                  for j in new_data:
-                      if f'{j.get(\"company\")}|{j.get(\"role\")}' not in existing_ids:
-                          jobs.insert(0, j)
-                          added += 1
-                  with open('jobs.json', 'w', encoding='utf-8') as f:
-                      json.dump(jobs[:200], f, ensure_ascii=False, indent=2)
-                  print(f'SUCCESS: Added {added} jobs.')
-              else:
-                  print('No JSON found in response')
-                  sys.exit(1)
+              # הוספת מנגנון Retry במקרה של עומס
+              response = None
+              for attempt in range(3):
+                  try:
+                      response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+                      break
+                  except Exception as e:
+                      if '429' in str(e):
+                          print(f'Quota hit, waiting 30s... (Attempt {attempt+1}/3)')
+                          time.sleep(30)
+                      else: raise e
+
+              if response and response.text:
+                  json_match = re.search(r'\[.*\]', response.text, re.DOTALL)
+                  if json_match:
+                      new_data = json.loads(json_match.group(0))
+                      existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
+                      added = 0
+                      for j in new_data:
+                          if f'{j.get(\"company\")}|{j.get(\"role\")}' not in existing_ids:
+                              jobs.insert(0, j)
+                              added += 1
+                      with open('jobs.json', 'w', encoding='utf-8') as f:
+                          json.dump(jobs[:200], f, ensure_ascii=False, indent=2)
+                      print(f'SUCCESS: Added {added} jobs.')
+                  else:
+                      print('No JSON found')
+                      sys.exit(1)
           except Exception as e:
               print(f'Critical Error: {e}')
               sys.exit(1)
           "
-
-      - name: Commit and Push
-        run: |
-          git config user.name 'CareerBot'
-          git config user.email 'bot@github.com'
-          git add jobs.json
-          git commit -m "Restore and Update YAML" || exit 0
-          git push
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

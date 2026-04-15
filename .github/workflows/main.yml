@@ -1,4 +1,4 @@
-name: Career Sync - Robust Final
+name: Career Sync - 2026 Final
 on:
   schedule:
     - cron: '0 */6 * * *'
@@ -21,24 +21,36 @@ jobs:
           python-version: '3.11'
 
       - name: Install Libs
-        run: pip install google-generativeai
+        run: pip install google-genai
 
       - name: Run Robust Scan
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 -c "
-          import google.generativeai as genai
-          import json, os, re
-          genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-          model = genai.GenerativeModel('gemini-1.5-flash')
+          from google import genai
+          import json, os, re, sys
+          
           try:
-              with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
-          except: jobs = []
-          prompt = 'Find 10 NEW VP/Director jobs in Fintech/Banking Strategy, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Use Hebrew for analysis.'
-          try:
-              res = model.generate_content(prompt)
-              json_match = re.search(r'\[.*\]', res.text, re.DOTALL)
+              key = os.environ.get('GEMINI_API_KEY')
+              if not key: raise Exception('Missing API Key')
+              
+              client = genai.Client(api_key=key)
+              
+              try:
+                  with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
+              except: jobs = []
+
+              prompt = 'Find 10 VP/Director jobs in Fintech/Banking Strategy, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Use Hebrew for analysis.'
+              
+              response = client.models.generate_content(
+                  model='gemini-2.0-flash',
+                  contents=prompt
+              )
+              
+              text_content = response.text
+              json_match = re.search(r'\[.*\]', text_content, re.DOTALL)
+              
               if json_match:
                   new_data = json.loads(json_match.group(0))
                   existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
@@ -49,8 +61,13 @@ jobs:
                           added += 1
                   with open('jobs.json', 'w', encoding='utf-8') as f:
                       json.dump(jobs[:200], f, ensure_ascii=False, indent=2)
-                  print(f'Added {added} jobs.')
-          except Exception as e: print(e)
+                  print(f'SUCCESS: Added {added} jobs.')
+              else:
+                  print('No JSON found in response')
+                  sys.exit(1)
+          except Exception as e:
+              print(f'Critical Error: {e}')
+              sys.exit(1)
           "
 
       - name: Commit and Push
@@ -58,7 +75,7 @@ jobs:
           git config user.name 'CareerBot'
           git config user.email 'bot@github.com'
           git add jobs.json
-          git commit -m "Auto-update" || exit 0
+          git commit -m "Restore and Update YAML" || exit 0
           git push
 
       - name: Upload artifact

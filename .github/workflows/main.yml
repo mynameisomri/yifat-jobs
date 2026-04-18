@@ -2,17 +2,17 @@ name: Career Sync - Daily Final
 on:
   schedule:
     - cron: '0 10 * * *'  # ירוץ פעם ביום ב-10 בבוקר
-  workflow_dispatch:      # מאפשר לך להריץ ידנית כשבא לך
+  workflow_dispatch:      # מאפשר לך להריץ ידנית
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/set-up-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -33,7 +33,7 @@ jobs:
           model = genai.GenerativeModel('gemini-1.5-flash')
 
           prompt = '''
-          Search for 10 high-level job openings (VP Strategy, VP Operations, VP Partnerships, or Director in Commercial Banking).
+          Search for 15 high-level job openings (VP Strategy, VP Operations, VP Partnerships, or Director in Commercial Banking).
           Criteria: US Remote or Hybrid Orlando FL, Salary $150k+ base. Focus on Crypto, VC, and Asset Management.
           Return ONLY a JSON array with these fields: company, role, salary, match_percent (int), analysis (Hebrew), link.
           Do not include any text before or after the JSON.
@@ -44,9 +44,11 @@ jobs:
                   try:
                       response = model.generate_content(prompt)
                       if response.text:
-                          # ניקוי תגיות Markdown אם קיימות
                           clean_text = response.text.replace('```json', '').replace('```', '').strip()
-                          return json.loads(clean_text)
+                          # וודא שהטקסט מתחיל ב-[ ומסתיים ב-]
+                          start = clean_text.find('[')
+                          end = clean_text.rfind(']') + 1
+                          return json.loads(clean_text[start:end])
                   except Exception as e:
                       print(f'Attempt {attempt+1} failed: {e}')
                       time.sleep(30)

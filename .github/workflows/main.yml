@@ -1,8 +1,8 @@
-name: Career Sync - 2026 Final
+name: Career Sync - 2026 Final Stability
 on:
   schedule:
-    - cron: '0 10 * * *' # פעם ביום ב-10 בבוקר
-  workflow_dispatch:      # הרצה ידנית
+    - cron: '0 10 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # הגרסה היציבה שגוגל דורשת
+          python-version: '3.11'
 
       - name: Install dependencies
         run: pip install -U google-genai
@@ -25,14 +25,17 @@ jobs:
         run: |
           python3 << 'EOF'
           from google import genai
+          from google.genai import types
           import os
           import json
           import time
 
-          # שימוש בלקוח החדש של גוגל (SDK 2026)
-          client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
+          # התיקון הקריטי: הגדרת ה-API לגרסה v1 היציבה
+          client = genai.Client(
+              api_key=os.environ['GEMINI_API_KEY'],
+              http_options={'api_version': 'v1'}
+          )
           
-          # המודל היציב והמהיר ביותר כיום
           model_id = "gemini-1.5-flash"
 
           prompt = """
@@ -45,14 +48,12 @@ jobs:
           def get_jobs():
               for attempt in range(3):
                   try:
-                      # הפקודה המעודכנת
                       response = client.models.generate_content(
                           model=model_id,
                           contents=prompt
                       )
                       if response and response.text:
                           text = response.text.strip()
-                          # חילוץ נקי של ה-JSON מהתשובה
                           start = text.find('[')
                           end = text.rfind(']') + 1
                           if start != -1 and end != 0:
@@ -68,7 +69,7 @@ jobs:
                   json.dump(new_jobs, f, ensure_ascii=False, indent=2)
               print('Jobs updated successfully!')
           else:
-              print('Critical Error: Could not fetch jobs from AI.')
+              print('Still failing after API version fix.')
               exit(1)
           EOF
 
@@ -77,5 +78,5 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add jobs.json
-          git commit -m 'Automated Career Update' || echo 'No changes to commit'
+          git commit -m 'Automated Career Update - V1 Stability' || echo 'No changes to commit'
           git push

@@ -1,102 +1,162 @@
-name: Career Sync - 2026 Final
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Libs
-        run: pip install google-genai
-
-      - name: Run Robust Scan
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          python3 -c "
-          from google import genai
-          import json, os, re, sys, time
-          
-          try:
-              key = os.environ.get('GEMINI_API_KEY')
-              if not key: raise Exception('Missing API Key')
-              
-              client = genai.Client(api_key=key)
-              
-              try:
-                  with open('jobs.json', 'r', encoding='utf-8') as f: jobs = json.load(f)
-              except: jobs = []
-
-              prompt = 'Find 10 VP/Director jobs in Fintech/Banking Strategy, Remote US, $150k+. Return ONLY JSON list: [{\"company\":\"\",\"role\":\"\",\"salary\":\"\",\"match_percent\":0,\"analysis\":\"\",\"link\":\"\"}]. Use Hebrew for analysis.'
-              
-              response = None
-              # מנגנון Retry עם המתנה (Backoff)
-              for attempt in range(3):
-                  try:
-                      response = client.models.generate_content(
-                          model='gemini-2.0-flash',
-                          contents=prompt
-                      )
-                      break # הצליח, יוצא מהלופ
-                  except Exception as e:
-                      if '429' in str(e):
-                          print(f'Quota hit, waiting 30 seconds... (Attempt {attempt+1}/3)')
-                          time.sleep(30)
-                      else:
-                          raise e
-              
-              if response and response.text:
-                  json_match = re.search(r'\[.*\]', response.text, re.DOTALL)
-                  if json_match:
-                      new_data = json.loads(json_match.group(0))
-                      existing_ids = {f'{j.get(\"company\")}|{j.get(\"role\")}' for j in jobs}
-                      added = 0
-                      for j in new_data:
-                          if f'{j.get(\"company\")}|{j.get(\"role\")}' not in existing_ids:
-                              jobs.insert(0, j)
-                              added += 1
-                      with open('jobs.json', 'w', encoding='utf-8') as f:
-                          json.dump(jobs[:200], f, ensure_ascii=False, indent=2)
-                      print(f'SUCCESS: Added {added} jobs.')
-                  else:
-                      print('No JSON found in response')
-                      sys.exit(1)
-              else:
-                  print('AI response was empty after retries.')
-                  sys.exit(1)
-                  
-          except Exception as e:
-              print(f'Critical Error: {e}')
-              sys.exit(1)
-          "
-
-      - name: Commit and Push
-        run: |
-          git config user.name 'CareerBot'
-          git config user.email 'bot@github.com'
-          git add jobs.json
-          git commit -m "API Fix with Wait Time" || exit 0
-          git push
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+[
+  {
+    "company": "Tala",
+    "role": "VP Product - Lending & Retention (Remote)",
+    "salary": "$230,000 - $300,000",
+    "match_percent": 97,
+    "analysis": "משרה בכירה ביותר בפינטק. שילוב של אסטרטגיית אשראי ושימור לקוחות. השכר הוא מהגבוהים בשוק כרגע.",
+    "link": "https://www.tala.co/careers"
+  },
+  {
+    "company": "MoonPay",
+    "role": "VP, Strategic Operations (Remote)",
+    "salary": "$210,000 - $275,000",
+    "match_percent": 95,
+    "analysis": "הובלת האופרציה בחברת תשתית קריפטו מובילה. רלוונטי מאוד לניסיון שלך בניהול אקוסיסטם פיננסי.",
+    "link": "https://www.moonpay.com/careers"
+  },
+  {
+    "company": "Huntington National Bank",
+    "role": "VC Strategist (Remote)",
+    "salary": "$150,000 - $190,000",
+    "match_percent": 94,
+    "analysis": "תפקיד בנקאי קלאסי שנכנס לעולם ה-VC. דורש הערכת השקעות פינטק עבור הבנק.",
+    "link": "https://www.huntington.com/careers"
+  },
+  {
+    "company": "ZeroHash",
+    "role": "VP, Tokenization Strategy (Remote)",
+    "salary": "$190,000 - $260,000",
+    "match_percent": 93,
+    "analysis": "עבודה בחזית ה-RWA (Real World Assets) על הבלוקצ'יין. דורש הבנה עמוקה ברגולציה ובנקאות.",
+    "link": "https://www.zerohash.com/careers"
+  },
+  {
+    "company": "JPMorgan Chase",
+    "role": "VP, Fintech Partnerships (Remote Option)",
+    "salary": "$175,000 - $235,000",
+    "match_percent": 96,
+    "analysis": "ניהול הקשרים בין JPM לסטארטאפים. תפקיד יוקרתי שתפור על הרקע שלך ב-SVB.",
+    "link": "https://careers.jpmorgan.com/"
+  },
+  {
+    "company": "Circle",
+    "role": "Director, Institutional Strategy (Remote)",
+    "salary": "$185,000 - $240,000",
+    "match_percent": 94,
+    "analysis": "הובלת הקשר מול גופים פיננסיים מסורתיים בעולם ה-USDC. דורש ראייה אסטרטגית רחבה.",
+    "link": "https://www.circle.com/en/careers"
+  },
+  {
+    "company": "FalconX",
+    "role": "VP of Operations (Crypto Asset Management)",
+    "salary": "$200,000 - $255,000",
+    "match_percent": 92,
+    "analysis": "ניהול האופרציה של חטיבת ניהול הנכסים הדיגיטליים. דורש הבנה ב-Trading וניהול סיכונים.",
+    "link": "https://falconx.io/careers"
+  },
+  {
+    "company": "Carta",
+    "role": "VP, Fund Administration Strategy",
+    "salary": "$220,000 - $290,000",
+    "match_percent": 96,
+    "analysis": "ניהול האסטרטגיה עבור קרנות VC. רלוונטי מאוד לידע שלך על מבנה הון וחברות פורטפוליו.",
+    "link": "https://carta.com/careers"
+  },
+  {
+    "company": "BNY Mellon",
+    "role": "VP, Digital Assets Product Management (Remote)",
+    "salary": "$165,000 - $225,000",
+    "match_percent": 92,
+    "analysis": "בניית מוצרי קריפטו בבנק מוסדי. שילוב מעולה של יוקרה בנקאית וחדשנות טכנולוגית.",
+    "link": "https://www.bnymellon.com/careers"
+  },
+  {
+    "company": "Plaid",
+    "role": "VP, Global Banking Partnerships (Remote)",
+    "salary": "$240,000 - $310,000",
+    "match_percent": 97,
+    "analysis": "הובלת השותפויות עם בנקים בעולם. תפקיד בכיר מאוד בחברת תשתית הפינטק המובילה.",
+    "link": "https://plaid.com/careers"
+  },
+  {
+    "company": "Block (Square)",
+    "role": "Director, Fintech Strategy",
+    "salary": "$230,000+",
+    "match_percent": 91,
+    "analysis": "עיצוב עתיד התשלומים בבלוק. דורש ראייה רחבה ויכולת הובלת פרויקטים אסטרטגיים.",
+    "link": "https://block.xyz/careers"
+  },
+  {
+    "company": "Chainlink Labs",
+    "role": "Director of Strategic Partnerships (Remote)",
+    "salary": "$180,000 - $250,000",
+    "match_percent": 93,
+    "analysis": "חיבור בין עולם הפיננסים המסורתי ל-Web3. דורש הבנה טכנית ופיננסית משולבת.",
+    "link": "https://chainlinklabs.com/jobs"
+  },
+  {
+    "company": "Fifth Third Bank",
+    "role": "VP, Commercial Banking Strategy (Florida Hybrid)",
+    "salary": "$160,000 - $210,000",
+    "match_percent": 95,
+    "analysis": "משרה מעולה באורלנדו, פלורידה. הובלת צמיחה בבנקאות מסחרית אזורית.",
+    "link": "https://www.53.com/careers"
+  },
+  {
+    "company": "Kraken",
+    "role": "VP, Institutional Operations",
+    "salary": "$210,000 - $280,000",
+    "match_percent": 94,
+    "analysis": "ניהול האופרציה מול לקוחות מוסדיים בבורסת קריפטו גלובלית.",
+    "link": "https://www.kraken.com/careers"
+  },
+  {
+    "company": "Curinos",
+    "role": "VP, Solutions Architecture (Remote FL)",
+    "salary": "$200,000 - $250,000",
+    "match_percent": 93,
+    "analysis": "משרה אסטרטגית-טכנולוגית מפלורידה. דגש על פתרונות אנליטיים למגזר הפיננסי.",
+    "link": "https://curinos.com/careers"
+  },
+  {
+    "company": "Cross River Bank",
+    "role": "VP, Fintech Partnerships",
+    "salary": "$180,000 - $220,000",
+    "match_percent": 96,
+    "analysis": "הבנק שמאפשר את רוב הפינטק בארה\"ב. ניהול שותפויות אסטרטגיות בדרג בכיר.",
+    "link": "https://crossriver.com/careers"
+  },
+  {
+    "company": "Andreessen Horowitz (a16z)",
+    "role": "Director, Portfolio Strategy (Crypto)",
+    "salary": "$250,000+",
+    "match_percent": 90,
+    "analysis": "ליווי חברות פורטפוליו בקרן ה-VC המובילה בעולם. דורש הבנה עמוקה באקוסיסטם הפינטק.",
+    "link": "https://a16z.com/careers/"
+  },
+  {
+    "company": "Robinhood",
+    "role": "VP, Corporate Strategy",
+    "salary": "$220,000 - $280,000",
+    "match_percent": 92,
+    "analysis": "עבודה ישירות מול ההנהלה על כיווני הצמיחה של רובינהוד, כולל קריפטו והתרחבות גלובלית.",
+    "link": "https://careers.robinhood.com/"
+  },
+  {
+    "company": "SoFi",
+    "role": "Director, Lending Operations (Remote)",
+    "salary": "$180,000 - $225,000",
+    "match_percent": 94,
+    "analysis": "ניהול מערך ההלוואות בבנק הדיגיטלי. תפקיד קלאסי למי שמגיע מעולם ה-Credit המסחרי.",
+    "link": "https://www.sofi.com/careers/"
+  },
+  {
+    "company": "Wells Fargo",
+    "role": "VP, Asset Management Risk (Orlando Hybrid)",
+    "salary": "$170,000 - $220,000",
+    "match_percent": 95,
+    "analysis": "ניהול סיכונים בחטיבת ניהול הנכסים באורלנדו. מושלם למעבר המתוכנן לפלורידה.",
+    "link": "https://www.wellsfargo.com/about/careers/"
+  }
+]

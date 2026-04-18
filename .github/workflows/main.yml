@@ -1,8 +1,8 @@
-name: Career Sync - Daily Final
+name: Career Sync - 2026 Fixed
 on:
   schedule:
-    - cron: '0 10 * * *'  # ירוץ פעם ביום ב-10 בבוקר
-  workflow_dispatch:      # מאפשר לך להריץ ידנית
+    - cron: '0 10 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,43 +14,52 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install google-generativeai
+        run: pip install -U google-generativeai
 
       - name: Run Job Sync
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python3 -c "
+          python3 << 'EOF'
           import google.generativeai as genai
           import os
           import json
           import time
 
+          # קונפיגורציה למודל היציב ביותר ב-2026
           genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-          model = genai.GenerativeModel('gemini-1.5-flash')
+          
+          # השתמש בשם המודל המלא והמעודכן
+          model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-          prompt = '''
+          prompt = """
           Search for 15 high-level job openings (VP Strategy, VP Operations, VP Partnerships, or Director in Commercial Banking).
           Criteria: US Remote or Hybrid Orlando FL, Salary $150k+ base. Focus on Crypto, VC, and Asset Management.
           Return ONLY a JSON array with these fields: company, role, salary, match_percent (int), analysis (Hebrew), link.
-          Do not include any text before or after the JSON.
-          '''
+          Do not include any text before or after the JSON array.
+          """
 
           def get_jobs():
               for attempt in range(3):
                   try:
                       response = model.generate_content(prompt)
-                      if response.text:
-                          clean_text = response.text.replace('```json', '').replace('```', '').strip()
-                          # וודא שהטקסט מתחיל ב-[ ומסתיים ב-]
-                          start = clean_text.find('[')
-                          end = clean_text.rfind(']') + 1
-                          return json.loads(clean_text[start:end])
+                      if response and response.text:
+                          text = response.text.strip()
+                          # ניקוי שאריות Markdown
+                          if '```' in text:
+                              text = text.split('```')[1]
+                              if text.startswith('json'):
+                                  text = text[4:]
+                          
+                          # חיתוך למציאת המערך בלבד
+                          start = text.find('[')
+                          end = text.rfind(']') + 1
+                          return json.loads(text[start:end])
                   except Exception as e:
-                      print(f'Attempt {attempt+1} failed: {e}')
+                      print(f"Attempt {attempt+1} failed: {str(e)}")
                       time.sleep(30)
               return None
 
@@ -58,11 +67,11 @@ jobs:
           if new_jobs:
               with open('jobs.json', 'w', encoding='utf-8') as f:
                   json.dump(new_jobs, f, ensure_ascii=False, indent=2)
-              print('Successfully updated jobs.json')
+              print('Jobs.json updated successfully.')
           else:
-              print('Failed to get jobs after retries')
+              print('Could not retrieve jobs.')
               exit(1)
-          "
+          EOF
 
       - name: Commit and push changes
         run: |

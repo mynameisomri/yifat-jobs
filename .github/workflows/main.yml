@@ -1,8 +1,8 @@
-name: Career Sync - 2026 Ultimate
+name: Career Sync - 2026 Final
 on:
   schedule:
-    - cron: '0 10 * * *'
-  workflow_dispatch:
+    - cron: '0 10 * * *' # פעם ביום ב-10 בבוקר
+  workflow_dispatch:      # הרצה ידנית
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11' # הגרסה היציבה שגוגל דורשת
 
       - name: Install dependencies
         run: pip install -U google-genai
@@ -29,9 +29,10 @@ jobs:
           import json
           import time
 
-          # שימוש בספרייה החדשה והרשמית של גוגל
+          # שימוש בלקוח החדש של גוגל (SDK 2026)
           client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
           
+          # המודל היציב והמהיר ביותר כיום
           model_id = "gemini-1.5-flash"
 
           prompt = """
@@ -44,24 +45,20 @@ jobs:
           def get_jobs():
               for attempt in range(3):
                   try:
-                      # הפקודה החדשה ב-2026
+                      # הפקודה המעודכנת
                       response = client.models.generate_content(
                           model=model_id,
                           contents=prompt
                       )
                       if response and response.text:
                           text = response.text.strip()
-                          # ניקוי Markdown אם קיים
-                          if '```' in text:
-                              text = text.split('```')[1]
-                              if text.startswith('json'):
-                                  text = text[4:]
-                          
+                          # חילוץ נקי של ה-JSON מהתשובה
                           start = text.find('[')
                           end = text.rfind(']') + 1
-                          return json.loads(text[start:end])
+                          if start != -1 and end != 0:
+                              return json.loads(text[start:end])
                   except Exception as e:
-                      print(f"Attempt {attempt+1} failed: {str(e)}")
+                      print(f"Attempt {attempt+1} failed: {e}")
                       time.sleep(30)
               return None
 
@@ -69,9 +66,9 @@ jobs:
           if new_jobs:
               with open('jobs.json', 'w', encoding='utf-8') as f:
                   json.dump(new_jobs, f, ensure_ascii=False, indent=2)
-              print('Jobs.json updated successfully.')
+              print('Jobs updated successfully!')
           else:
-              print('Could not retrieve jobs.')
+              print('Critical Error: Could not fetch jobs from AI.')
               exit(1)
           EOF
 
@@ -80,5 +77,5 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add jobs.json
-          git commit -m 'Daily career sync updated' || echo 'No changes to commit'
+          git commit -m 'Automated Career Update' || echo 'No changes to commit'
           git push

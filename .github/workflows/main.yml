@@ -1,82 +1,37 @@
-name: Career Sync - 2026 Final Stability
+name: Daily Job Scanner
+
 on:
   schedule:
-    - cron: '0 10 * * *'
-  workflow_dispatch:
+    - cron: '0 17 * * *' # רץ כל יום ב-17:00 UTC (12:00 שעון ניו יורק)
+  workflow_dispatch: # מאפשר לך להריץ ידנית מהטאב Actions
 
 jobs:
-  build:
+  scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # קריטי: מאפשר לבוט לעדכן את קובץ ה-JSON
+    
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
-      - name: Install dependencies
-        run: pip install -U google-genai
+      - name: Install Dependencies
+        run: pip install requests openai
 
-      - name: Run Job Sync
+      - name: Run Scanner Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scanner.py
+
+      - name: Commit and Push Updates
         run: |
-          python3 << 'EOF'
-          from google import genai
-          from google.genai import types
-          import os
-          import json
-          import time
-
-          # התיקון הקריטי: הגדרת ה-API לגרסה v1 היציבה
-          client = genai.Client(
-              api_key=os.environ['GEMINI_API_KEY'],
-              http_options={'api_version': 'v1'}
-          )
-          
-          model_id = "gemini-1.5-flash"
-
-          prompt = """
-          Search for 15 high-level job openings (VP Strategy, VP Operations, VP Partnerships, or Director in Commercial Banking).
-          Criteria: US Remote or Hybrid Orlando FL, Salary $150k+ base. Focus on Crypto, VC, and Asset Management.
-          Return ONLY a JSON array with these fields: company, role, salary, match_percent (int), analysis (Hebrew), link.
-          Do not include any text before or after the JSON array.
-          """
-
-          def get_jobs():
-              for attempt in range(3):
-                  try:
-                      response = client.models.generate_content(
-                          model=model_id,
-                          contents=prompt
-                      )
-                      if response and response.text:
-                          text = response.text.strip()
-                          start = text.find('[')
-                          end = text.rfind(']') + 1
-                          if start != -1 and end != 0:
-                              return json.loads(text[start:end])
-                  except Exception as e:
-                      print(f"Attempt {attempt+1} failed: {e}")
-                      time.sleep(30)
-              return None
-
-          new_jobs = get_jobs()
-          if new_jobs:
-              with open('jobs.json', 'w', encoding='utf-8') as f:
-                  json.dump(new_jobs, f, ensure_ascii=False, indent=2)
-              print('Jobs updated successfully!')
-          else:
-              print('Still failing after API version fix.')
-              exit(1)
-          EOF
-
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+          git config --global user.name "JobBot"
+          git config --global user.email "bot@github.com"
           git add jobs.json
-          git commit -m 'Automated Career Update - V1 Stability' || echo 'No changes to commit'
+          git commit -m "Auto-update jobs: $(date)" || echo "No changes to commit"
           git push

@@ -34,17 +34,18 @@
 
     <script>
         async function loadJobs() {
-            // הכתובת המדויקת ל-Repository שלך
-            const url = `https://raw.githubusercontent.com/mynameisomri/yifat-jobs/main/jobs.json?t=${new Date().getTime()}`;
+            // כתובת ה-Raw המדויקת והבדוקה של הקובץ שלך
+            const url = 'https://raw.githubusercontent.com/mynameisomri/yifat-jobs/main/jobs.json';
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load jobs');
+                if (!response.ok) throw new Error('לא הצלחנו למשוך את הקובץ מגיטהאב');
+                
                 const jobs = await response.json();
                 const container = document.getElementById('jobs-container');
                 container.innerHTML = '';
 
-                if (jobs.length === 0) {
+                if (!jobs || jobs.length === 0) {
                     container.innerHTML = '<p style="text-align:center;">אין משרות חדשות כרגע.</p>';
                     return;
                 }
@@ -61,8 +62,9 @@
                     container.innerHTML += card;
                 });
             } catch (error) {
-                console.error('Fetch error:', error);
-                document.getElementById('jobs-container').innerHTML = '<p style="text-align:center; color:red;">שגיאה בטעינת הנתונים מגיטהאב. וודא שה-Repository הוא Public.</p>';
+                console.error('Error:', error);
+                document.getElementById('jobs-container').innerHTML = 
+                    '<p style="text-align:center; color:red;">שגיאה בטעינת הנתונים. וודא שה-Repository מוגדר כ-Public בגיטהאב.</p>';
             }
         }
         loadJobs();

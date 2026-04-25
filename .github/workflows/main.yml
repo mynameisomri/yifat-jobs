@@ -9,15 +9,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # חשוב מאוד: מאפשר לבוט לכתוב ל-Repo
+      contents: write # קריטי: מאפשר לבוט לכתוב את השינויים לתוך ה-Repo
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v6 # גרסה מעודכנת שתומכת ב-Node 24
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6 # גרסה מעודכנת שתומכת ב-Node 24
         with:
-          python-version: '3.9'
+          python-version: '3.13' # שימוש בגרסת פייתון מודרנית
+
       - name: Run Update Script
         run: python scanner.py
+
       - name: Push Changes
         run: |
           git config --global user.name "IfatJobBot"

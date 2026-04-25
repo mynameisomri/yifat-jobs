@@ -2,7 +2,7 @@ import json
 import os
 
 def update_jobs():
-    # המשרות הטובות ביותר שמצאתי ליפעת נכון ל-25 באפריל
+    # המשרות הטובות ביותר ליפעת - מעודכן ל-25 באפריל
     new_jobs = [
         {
             "company": "BNY Mellon",
@@ -30,10 +30,10 @@ def update_jobs():
         }
     ]
 
-    # כתיבת הקובץ בצורה נקייה ל-Repo
+    # כתיבת הקובץ עם תמיכה מלאה בעברית (UTF-8)
     with open("jobs.json", "w", encoding="utf-8") as f:
         json.dump(new_jobs, f, ensure_ascii=False, indent=2)
-    print("Jobs updated successfully for Ifat!")
+    print(f"Successfully updated jobs.json with {len(new_jobs)} jobs.")
 
 if __name__ == "__main__":
     update_jobs()

@@ -3,21 +3,21 @@ name: Ifat Job Update
 on:
   schedule:
     - cron: '0 12 * * *' # ירוץ כל יום ב-12:00 (צהריים ניו יורק)
-  workflow_dispatch: # מאפשר לך להריץ ידנית בלחיצת כפתור בגיטהאב
+  workflow_dispatch: # מאפשר הרצה ידנית
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # קריטי: מאפשר לבוט לכתוב את השינויים לתוך ה-Repo
+      contents: write # קריטי ליכולת לעדכן את ה-JSON
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6 # גרסה מעודכנת שתומכת ב-Node 24
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v6 # גרסה מעודכנת שתומכת ב-Node 24
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.13' # שימוש בגרסת פייתון מודרנית
+          python-version: '3.13'
 
       - name: Run Update Script
         run: python scanner.py

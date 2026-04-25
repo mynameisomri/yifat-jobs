@@ -34,8 +34,8 @@
 
     <script>
         async function loadJobs() {
-            // הכתובת מוגדרת ישירות ל-Repo שלך
-            const url = `https://raw.githubusercontent.com/omri-r/ifat-jobs/main/jobs.json?t=${new Date().getTime()}`;
+            // הכתובת המדויקת ל-Repository שלך
+            const url = `https://raw.githubusercontent.com/mynameisomri/yifat-jobs/main/jobs.json?t=${new Date().getTime()}`;
 
             try {
                 const response = await fetch(url);
@@ -61,7 +61,8 @@
                     container.innerHTML += card;
                 });
             } catch (error) {
-                document.getElementById('jobs-container').innerHTML = '<p style="text-align:center; color:red;">שגיאה בטעינת הנתונים מגיטהאב.</p>';
+                console.error('Fetch error:', error);
+                document.getElementById('jobs-container').innerHTML = '<p style="text-align:center; color:red;">שגיאה בטעינת הנתונים מגיטהאב. וודא שה-Repository הוא Public.</p>';
             }
         }
         loadJobs();

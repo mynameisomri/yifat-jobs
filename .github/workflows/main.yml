@@ -1,31 +1,24 @@
 name: Ifat Job Update
-
 on:
   schedule:
-    - cron: '0 12 * * *' # ירוץ כל יום ב-12:00 (צהריים ניו יורק)
-  workflow_dispatch: # מאפשר הרצה ידנית
-
+    - cron: '0 12 * * *'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # קריטי ליכולת לעדכן את ה-JSON
+      contents: write
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
-
-      - name: Run Update Script
+          python-version: '3.10'
+      - name: Run Scanner
         run: python scanner.py
-
-      - name: Push Changes
+      - name: Commit and Push
         run: |
           git config --global user.name "IfatJobBot"
           git config --global user.email "bot@github.com"
           git add jobs.json
-          git commit -m "Automated update: New jobs for Ifat" || echo "No changes to commit"
+          git commit -m "Automated update with Pretty Print" || echo "No changes"
           git push

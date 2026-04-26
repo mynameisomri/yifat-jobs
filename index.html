@@ -1,49 +1,33 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משרות עבור יפעת</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; direction: rtl; text-align: right; }
-        .header { text-align: center; padding: 20px; background: white; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { max-width: 700px; margin: 0 auto; }
-        .job-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-right: 6px solid #007bff; }
-        .company { font-weight: bold; color: #007bff; font-size: 1.2em; }
-        .salary { color: #28a745; font-weight: bold; margin: 10px 0; }
-        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="header"><h1>משרות רלוונטיות עבור יפעת</h1></div>
-    <div id="jobs-list" class="container">טוען נתונים...</div>
+<script>
+    async function fetchJobs() {
+        try {
+            // הוספת ./ לפני שם הקובץ כדי לוודא חיפוש בתיקייה הנוכחית
+            const response = await fetch('./jobs.json?t=' + Date.now());
+            if (!response.ok) throw new Error('הקובץ לא נמצא בשרת');
+            
+            const jobs = await response.json();
+            const list = document.getElementById('jobs-list');
+            list.innerHTML = '';
 
-    <script>
-        async function fetchJobs() {
-            try {
-                // משיכה יחסית בתוך ה-Repo
-                const response = await fetch('jobs.json?t=' + Date.now());
-                if (!response.ok) throw new Error('הנתונים עדיין לא מוכנים');
-                const jobs = await response.json();
-                const list = document.getElementById('jobs-list');
-                list.innerHTML = '';
-
-                jobs.forEach(job => {
-                    list.innerHTML += `
-                        <div class="job-card">
-                            <div class="company">${job.company}</div>
-                            <div style="font-size: 1.1em; margin: 5px 0;">${job.role}</div>
-                            <div class="salary">שכר: ${job.salary}</div>
-                            <p><strong>התאמה:</strong> ${job.match_percent}%</p>
-                            <p>${job.analysis}</p>
-                            <a href="${job.link}" target="_blank" class="btn">פרטי המשרה</a>
-                        </div>`;
-                });
-            } catch (err) {
-                document.getElementById('jobs-list').innerHTML = `<p style="color:red; text-align:center;">${err.message}</p>`;
+            if (jobs.length === 0) {
+                list.innerHTML = '<p>אין משרות להצגה כרגע.</p>';
+                return;
             }
+
+            jobs.forEach(job => {
+                list.innerHTML += `
+                    <div class="job-card">
+                        <div class="company">${job.company}</div>
+                        <div>${job.role}</div>
+                        <div class="salary">שכר: ${job.salary}</div>
+                        <p>${job.analysis}</p>
+                        <a href="${job.link}" target="_blank" class="btn">פרטי המשרה</a>
+                    </div>`;
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('jobs-list').innerHTML = `<p style="color:red;">שגיאה: ${err.message}</p>`;
         }
-        fetchJobs();
-    </script>
-</body>
-</html>
+    }
+    fetchJobs();
+</script>

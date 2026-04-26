@@ -1,19 +1,57 @@
-async function fetchJobs() {
-    try {
-        const response = await fetch('jobs.json?t=' + Date.now());
-        const data = await response.json(); // עכשיו data מכיל metadata ו-jobs
-        
-        const container = document.getElementById('jobs-list');
-        container.innerHTML = '';
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משרות עבור יפעת</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; direction: rtl; text-align: right; }
+        .header { text-align: center; padding: 20px; background: white; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 700px; margin: 0 auto; }
+        .update-time { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .job-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-right: 6px solid #007bff; }
+        .company { font-weight: bold; color: #007bff; font-size: 1.2em; }
+        .salary { color: #28a745; font-weight: bold; margin: 10px 0; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>משרות רלוונטיות עבור יפעת</h1>
+        <div id="last-update" class="update-time">טוען זמן עדכון...</div>
+    </div>
+    <div class="container" id="jobs-list">טוען משרות...</div>
 
-        // הצגת תאריך עדכון מה-metadata
-        const lastUpdate = document.createElement('p');
-        lastUpdate.style.textAlign = 'center';
-        lastUpdate.innerHTML = `עדכון אחרון: ${data.metadata.last_scan}`;
-        container.appendChild(lastUpdate);
+    <script>
+        async function fetchJobs() {
+            try {
+                const response = await fetch('jobs.json?t=' + Date.now());
+                if (!response.ok) throw new Error('הנתונים עדיין לא מוכנים');
+                
+                const data = await response.json();
+                
+                // עדכון זמן הסריקה האחרון
+                document.getElementById('last-update').innerText = `סריקה אחרונה: ${data.metadata.last_scan}`;
+                
+                const list = document.getElementById('jobs-list');
+                list.innerHTML = '';
 
-        data.jobs.forEach(job => {
-            // ... (קוד הצגת הכרטיסיות נשאר דומה, רק מושך מ-data.jobs)
-        });
-    } catch (err) { /* ... */ }
-}
+                data.jobs.forEach(job => {
+                    list.innerHTML += `
+                        <div class="job-card">
+                            <div class="company">${job.company}</div>
+                            <div style="font-size: 1.1em; margin: 5px 0;">${job.role}</div>
+                            <div class="salary">שכר בסיס: ${job.salary}</div>
+                            <p><strong>התאמה:</strong> ${job.match_percent}%</p>
+                            <p>${job.analysis}</p>
+                            <a href="${job.link}" target="_blank" class="btn">פרטי המשרה</a>
+                        </div>`;
+                });
+            } catch (err) {
+                document.getElementById('jobs-list').innerHTML = `<p style="color:red; text-align:center;">שגיאה: ${err.message}</p>`;
+            }
+        }
+        fetchJobs();
+    </script>
+</body>
+</html>

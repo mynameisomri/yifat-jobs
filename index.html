@@ -3,49 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משרות חמות עבור יפעת</title>
+    <title>משרות עבור יפעת</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
-        .container { max-width: 800px; margin: 0 auto; text-align: right; }
-        .job-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-right: 6px solid #2ecc71; }
-        .salary { color: #27ae60; font-weight: bold; }
-        .btn { display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 6px; margin-top: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; direction: rtl; text-align: right; }
+        .header { text-align: center; padding: 20px; background: white; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 700px; margin: 0 auto; }
+        .job-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-right: 6px solid #007bff; }
+        .company { font-weight: bold; color: #007bff; font-size: 1.2em; }
+        .salary { color: #28a745; font-weight: bold; margin: 10px 0; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>הזדמנויות קריירה נבחרות עבור יפעת</h1>
-    <div class="container" id="jobs-container">טוען משרות...</div>
-
+    <div class="header"><h1>משרות רלוונטיות עבור יפעת</h1></div>
+    <div class="container" id="jobs-list">טוען נתונים...</div>
     <script>
-        async function loadJobs() {
-            // התיקון: שימוש בנתיב יחסי פשוט בלי תוספות
-            const url = 'jobs.json?t=' + Date.now();
-
+        async function fetchJobs() {
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('הקובץ jobs.json לא נמצא');
-                
+                // משיכה יחסית - הכי אמין ב-GitHub Pages
+                const response = await fetch('jobs.json?t=' + Date.now());
+                if (!response.ok) throw new Error('הנתונים עדיין לא מוכנים');
                 const jobs = await response.json();
-                const container = document.getElementById('jobs-container');
-                container.innerHTML = '';
-
+                const list = document.getElementById('jobs-list');
+                list.innerHTML = '';
                 jobs.forEach(job => {
-                    container.innerHTML += `
+                    list.innerHTML += `
                         <div class="job-card">
-                            <h3>${job.company} - ${job.role}</h3>
-                            <p class="salary">שכר: ${job.salary}</p>
+                            <div class="company">${job.company}</div>
+                            <div style="font-size: 1.1em; margin: 5px 0;">${job.role}</div>
+                            <div class="salary">שכר: ${job.salary}</div>
                             <p><strong>התאמה:</strong> ${job.match_percent}%</p>
                             <p>${job.analysis}</p>
                             <a href="${job.link}" target="_blank" class="btn">פרטי המשרה</a>
                         </div>`;
                 });
-            } catch (error) {
-                console.error(error);
-                document.getElementById('jobs-container').innerHTML = 
-                    '<p style="color:red">שגיאה: לא הצלחנו לטעון את המשרות. וודא שקובץ jobs.json קיים ב-Repository.</p>';
+            } catch (err) {
+                document.getElementById('jobs-list').innerHTML = `<p style="color:red; text-align:center;">${err.message}</p>`;
             }
         }
-        loadJobs();
+        fetchJobs();
     </script>
 </body>
 </html>

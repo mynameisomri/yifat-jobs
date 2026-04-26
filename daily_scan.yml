@@ -1,0 +1,30 @@
+name: Ifat Job Update
+on:
+  schedule:
+    - cron: '0 12 * * *' # ירוץ כל יום ב-12 בצהריים (שעון ניו יורק)
+  workflow_dispatch: # מאפשר לך להריץ ידנית בלחיצת כפתור
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # מאפשר לבוט לכתוב את קובץ ה-JSON
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5 # תמיכה ב-Node 24 (ללא אזהרות)
+        with:
+          python-version: '3.10'
+
+      - name: Run Scanner
+        run: python scanner.py
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "IfatJobBot"
+          git config --global user.email "bot@github.com"
+          git add jobs.json
+          git commit -m "Automated update with node24 support" || echo "No changes"
+          git push

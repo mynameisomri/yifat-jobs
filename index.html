@@ -1,91 +1,19 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משרות חמות עבור יפעת</title>
-    <style>
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #1c1e21; }
-        .header { text-align: center; padding: 30px 10px; background: #ffffff; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 12px; }
-        .header h1 { margin: 0; color: #007bff; font-size: 1.8em; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .job-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-right: 6px solid #28a745; transition: transform 0.2s; }
-        .job-card:hover { transform: translateY(-3px); }
-        .company { font-weight: bold; color: #007bff; font-size: 1.3em; margin-bottom: 5px; }
-        .role { font-size: 1.1em; font-weight: 600; color: #333; margin-bottom: 10px; }
-        .salary { color: #28a745; font-weight: bold; font-size: 1.05em; margin: 10px 0; display: block; }
-        .match-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold; display: inline-block; margin-bottom: 15px; }
-        .analysis { background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.95em; line-height: 1.6; margin-bottom: 20px; border-left: 3px solid #dee2e6; }
-        .btn { display: inline-block; padding: 12px 25px; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; text-align: center; width: 100%; box-sizing: border-box; }
-        .btn:hover { background-color: #0056b3; }
-        #status-msg { text-align: center; color: #666; margin-top: 50px; font-style: italic; }
-    </style>
-</head>
-<body>
+async function fetchJobs() {
+    try {
+        const response = await fetch('jobs.json?t=' + Date.now());
+        const data = await response.json(); // עכשיו data מכיל metadata ו-jobs
+        
+        const container = document.getElementById('jobs-list');
+        container.innerHTML = '';
 
-    <div class="header">
-        <h1>הזדמנויות קריירה נבחרות</h1>
-        <p>עדכון יומי עבור יפעת</p>
-    </div>
+        // הצגת תאריך עדכון מה-metadata
+        const lastUpdate = document.createElement('p');
+        lastUpdate.style.textAlign = 'center';
+        lastUpdate.innerHTML = `עדכון אחרון: ${data.metadata.last_scan}`;
+        container.appendChild(lastUpdate);
 
-    <div class="container" id="jobs-container">
-        <div id="status-msg">מחפש את המשרות הכי טובות...</div>
-    </div>
-
-    <script>
-        async function loadJobs() {
-            const container = document.getElementById('jobs-container');
-            
-            // הכתובת היחסית המדויקת ב-GitHub Pages
-            const url = './jobs.json?t=' + Date.now();
-
-            try {
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error('לא הצלחנו למשוך את קובץ הנתונים (404)');
-                }
-
-                const jobs = await response.json();
-                
-                if (!jobs || jobs.length === 0) {
-                    container.innerHTML = '<div id="status-msg">כרגע אין משרות חדשות שעומדות בקריטריונים.</div>';
-                    return;
-                }
-
-                container.innerHTML = ''; // מנקה את הודעת הטעינה
-
-                jobs.forEach(job => {
-                    const card = `
-                        <div class="job-card">
-                            <div class="company">${job.company}</div>
-                            <div class="role">${job.role}</div>
-                            <span class="salary">💰 שכר בסיס: ${job.salary}</span>
-                            <div class="match-badge">🎯 ${job.match_percent}% התאמה</div>
-                            <div class="analysis">
-                                <strong>למה זה מתאים?</strong><br>
-                                ${job.analysis}
-                            </div>
-                            <a href="${job.link}" target="_blank" class="btn">הגשת מועמדות / פרטים</a>
-                        </div>
-                    `;
-                    container.innerHTML += card;
-                });
-
-            } catch (error) {
-                console.error("Error loading jobs:", error);
-                container.innerHTML = `
-                    <div id="status-msg" style="color: red; font-style: normal;">
-                        <strong>אופס! משהו לא עבד.</strong><br>
-                        האתר לא מצליח למצוא את קובץ המשרות.<br>
-                        <small>(שגיאה: ${error.message})</small>
-                    </div>
-                `;
-            }
-        }
-
-        // הפעלה ברגע שהדף נטען
-        window.onload = loadJobs;
-    </script>
-</body>
-</html>
+        data.jobs.forEach(job => {
+            // ... (קוד הצגת הכרטיסיות נשאר דומה, רק מושך מ-data.jobs)
+        });
+    } catch (err) { /* ... */ }
+}

@@ -9,12 +9,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4 
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5 # עדכון ל-v5 פותר את אזהרת Node 20
         with:
           python-version: '3.10'
+
       - name: Run Scanner
         run: python scanner.py
+
       - name: Commit and Push
         run: |
           git config --global user.name "IfatJobBot"
